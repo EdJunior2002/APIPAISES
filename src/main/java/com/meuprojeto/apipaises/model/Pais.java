@@ -21,11 +21,11 @@ public class Pais {
     private String capital;
 
     @Column(name = "regiao")
-    @JsonProperty("region")  // Certifique-se de que 'region' é mapeado corretamente para 'regiao'
+    @JsonProperty("region")
     private String regiao;
 
     @Column(name = "populacao")
-    @JsonProperty("population")  // Certifique-se de que 'population' é mapeado corretamente
+    @JsonProperty("population")
     private Long populacao;
 
     // Getters e Setters
