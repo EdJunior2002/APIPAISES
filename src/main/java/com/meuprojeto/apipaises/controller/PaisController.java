@@ -25,7 +25,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Arrays;
 
 @RestController
-@RequestMapping("/paises/v1.0")
+@RequestMapping("/helloWorld/v1")
 @Tag(name = "Países", description = "Endpoints para gerenciar países")
 public class PaisController {
 
@@ -44,7 +44,7 @@ public class PaisController {
                     @ApiResponse(responseCode = "200", description = "Lista de países filtrada",
                             content = @Content(mediaType = "application/json", schema = @Schema(implementation = Pais.class)))
             })
-    @GetMapping
+    @GetMapping("/filtro")
     public ResponseEntity<Page<Pais>> listarComFiltros(
             @RequestParam(required = false) String regiao,
             @RequestParam(required = false) Long populacaoMaiorQue,
@@ -101,7 +101,7 @@ public class PaisController {
                     @ApiResponse(responseCode = "201", description = "País adicionado com sucesso"),
                     @ApiResponse(responseCode = "400", description = "Requisição inválida")
             })
-    @PostMapping
+    @PostMapping("/adicionar")
     public ResponseEntity<Pais> adicionarPais(@RequestBody Pais novoPais) {
         Pais paisSalvo = paisRepository.save(novoPais);
         return ResponseEntity.status(HttpStatus.CREATED).body(paisSalvo);
@@ -139,10 +139,10 @@ public class PaisController {
         }
 
         Pais pais = paisOptional.get();
-        
+
         campos.forEach((chave, valor) -> {
             switch (chave) {
-                case "nome":
+                case "name":
                     if (valor instanceof Map) {
                         @SuppressWarnings("unchecked")
                         Map<String, String> nomeMap = (Map<String, String>) valor;
@@ -158,12 +158,12 @@ public class PaisController {
                         pais.setCapital(capitalList);
                     }
                     break;
-                case "regiao":
+                case "region":
                     if (valor instanceof String) {
                         pais.setRegiao((String) valor);
                     }
                     break;
-                case "populacao":
+                case "population":
                     if (valor instanceof Number) {
                         pais.setPopulacao(((Number) valor).longValue());
                     }

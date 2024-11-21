@@ -15,18 +15,13 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("API de Países")
-                        .description("API RESTful para gerenciamento de países com integração de dados externos")
-                        .version("1.0.0")
+                        .title("API HELLO WORLD")
+                        .description("SEJA BEM-VINDO A API HELLO WORLD")
+                        .version("v1")
                         .contact(new Contact()
-                                .name("Seu Nome")
-                                .email("seu.email@exemplo.com")
-                                .url("https://github.com/seu-repositorio"))
-                        .license(new License()
-                                .name("MIT License")
-                                .url("https://opensource.org/licenses/MIT")))
-                .externalDocs(new ExternalDocumentation()
-                        .description("Documentação completa da API")
-                        .url("https://github.com/seu-repositorio"));
+                                .name("GitHub")
+                                .url("https://github.com/EdJunior2002/APIPAISES")
+                        ));
+
     }
 }
