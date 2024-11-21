@@ -28,8 +28,6 @@ public class Pais {
     @JsonProperty("population")
     private Long populacao;
 
-    // Getters e Setters
-
     public static class Nome {
         private String common;
 
