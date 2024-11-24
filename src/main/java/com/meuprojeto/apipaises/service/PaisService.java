@@ -21,7 +21,8 @@ public class PaisService {
         String url = "https://restcountries.com/v3.1/all";
         Pais[] paisesExternos = restTemplate.getForObject(url, Pais[].class);
         if (paisesExternos != null) {
-            Arrays.stream(paisesExternos).forEach(paisRepository::save);
+            paisRepository.saveAll(Arrays.asList(paisesExternos));
+//            Arrays.stream(paisesExternos).forEach(paisRepository::save);
         }
     }
 
