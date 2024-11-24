@@ -20,7 +20,7 @@ public class PaisService {
     public void importarPaises() {
         String url = "https://restcountries.com/v3.1/all";
         Pais[] paisesExternos = restTemplate.getForObject(url, Pais[].class);
-        if (paisesExternos != null) {
+         if (paisesExternos != null) {
             paisRepository.saveAll(Arrays.asList(paisesExternos));
 //            Arrays.stream(paisesExternos).forEach(paisRepository::save);
         }
