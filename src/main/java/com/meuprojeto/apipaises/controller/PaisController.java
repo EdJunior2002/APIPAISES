@@ -1,28 +1,22 @@
 package com.meuprojeto.apipaises.controller;
 
+import com.meuprojeto.apipaises.model.Pais;
+import com.meuprojeto.apipaises.service.PaisService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.meuprojeto.apipaises.model.Pais;
-import com.meuprojeto.apipaises.repository.PaisRepository;
-
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import org.springframework.web.client.RestTemplate;
-import java.util.Arrays;
 
 @RestController
 @RequestMapping("/helloWorld/v1")
@@ -30,14 +24,16 @@ import java.util.Arrays;
 public class PaisController {
 
     @Autowired
-    private PaisRepository paisRepository;
+    private PaisService paisService;
 
+    // Endpoint para listar todos os países
     @Operation(summary = "Listar todos os países", description = "Retorna uma lista com todos os países armazenados.")
     @GetMapping("/todos")
     public List<Pais> listarTodos() {
-        return paisRepository.findAll();
+        return paisService.listarTodos();
     }
 
+    // Endpoint para listar países com filtros, ordenação e paginação
     @Operation(summary = "Listar países com filtros, ordenação e paginação",
             description = "Permite listar países aplicando filtros por região e população, além de ordenação e paginação.",
             responses = {
@@ -56,139 +52,52 @@ public class PaisController {
         Sort sortConfig = Sort.by(sort.startsWith("-") ? Sort.Order.desc(sort.substring(1)) : Sort.Order.asc(sort));
         Pageable pageable = PageRequest.of(page, size, sortConfig);
 
-        Page<Pais> resultados = paisRepository.findByFiltros(regiao, populacaoMaiorQue, populacaoMenorQue, pageable);
+        Page<Pais> resultados = paisService.listarComFiltros(regiao, populacaoMaiorQue, populacaoMenorQue, pageable);
 
         return ResponseEntity.ok(resultados);
     }
 
-    @Operation(summary = "Buscar país por ID",
-            description = "Retorna os detalhes de um país com base no ID fornecido.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "País encontrado",
-                            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Pais.class))),
-                    @ApiResponse(responseCode = "404", description = "País não encontrado")
-            })
+    // Endpoint para buscar país por ID
+    @Operation(summary = "Buscar país por ID", description = "Retorna os detalhes de um país com base no ID fornecido.")
     @GetMapping("/{id}")
     public ResponseEntity<Pais> buscarPorId(@PathVariable Long id) {
-        Optional<Pais> pais = paisRepository.findById(id);
+        Optional<Pais> pais = paisService.buscarPorId(id);
         return pais.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
-    @Operation(summary = "Importar lista de países",
-            description = "Importa uma lista de países de uma API externa e salva no banco de dados.")
-    @PostMapping("/importar")
-    public ResponseEntity<List<Pais>> importarPaises() {
-        String apiUrl = "https://restcountries.com/v3.1/all";
-        RestTemplate restTemplate = new RestTemplate();
-
-        try {
-            Pais[] paisesArray = restTemplate.getForObject(apiUrl, Pais[].class);
-            if (paisesArray != null) {
-                List<Pais> paisesImportados = Arrays.asList(paisesArray);
-                paisRepository.saveAll(paisesImportados);
-                return ResponseEntity.status(HttpStatus.CREATED).body(paisesImportados);
-            } else {
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    // Endpoint para criar um novo país
+    @Operation(summary = "Criar um novo país", description = "Cria um novo país e armazena no banco de dados.")
+    @PostMapping("/criar")
+    public ResponseEntity<Pais> criarPais(@RequestBody Pais pais) {
+        Pais novoPais = paisService.criar(pais);
+        return ResponseEntity.ok(novoPais);
     }
 
-    @Operation(summary = "Adicionar um novo país",
-            description = "Adiciona um país manualmente ao banco de dados.",
-            responses = {
-                    @ApiResponse(responseCode = "201", description = "País adicionado com sucesso"),
-                    @ApiResponse(responseCode = "400", description = "Requisição inválida")
-            })
-    @PostMapping("/adicionar")
-    public ResponseEntity<Pais> adicionarPais(@RequestBody Pais novoPais) {
-        Pais paisSalvo = paisRepository.save(novoPais);
-        return ResponseEntity.status(HttpStatus.CREATED).body(paisSalvo);
+    // Endpoint para atualizar um país
+    @Operation(summary = "Atualizar um país", description = "Atualiza os detalhes de um país existente com base no ID fornecido.")
+    @PutMapping("/atualizar/{id}")
+    public ResponseEntity<Pais> atualizarPais(@PathVariable Long id, @RequestBody Pais pais) {
+        Optional<Pais> paisAtualizado = paisService.atualizar(id, pais);
+        return paisAtualizado.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
-    @Operation(summary = "Atualizar dados de um país",
-            description = "Atualiza os dados de um país existente com base no ID fornecido.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "País atualizado com sucesso"),
-                    @ApiResponse(responseCode = "404", description = "País não encontrado")
-            })
-    @PutMapping("/{id}")
-    public ResponseEntity<Pais> atualizarPais(@PathVariable Long id, @RequestBody Pais paisAtualizado) {
-        if (!paisRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        paisAtualizado.setId(id);
-        Pais paisSalvo = paisRepository.save(paisAtualizado);
-        return ResponseEntity.ok(paisSalvo);
-    }
-
-    @Operation(summary = "Atualizar parcialmente um país",
-            description = "Atualiza um ou mais atributos de um país existente com base no ID fornecido.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "País atualizado com sucesso"),
-                    @ApiResponse(responseCode = "404", description = "País não encontrado"),
-                    @ApiResponse(responseCode = "400", description = "Requisição inválida")
-            })
-    @PatchMapping("/{id}")
-    public ResponseEntity<Pais> atualizarParcialmentePais(@PathVariable Long id, @RequestBody Map<String, Object> campos) {
-        Optional<Pais> paisOptional = paisRepository.findById(id);
-
-        if (!paisOptional.isPresent()) {
-            return ResponseEntity.notFound().build();
-        }
-
-        Pais pais = paisOptional.get();
-
-        campos.forEach((chave, valor) -> {
-            switch (chave) {
-                case "name":
-                    if (valor instanceof Map) {
-                        @SuppressWarnings("unchecked")
-                        Map<String, String> nomeMap = (Map<String, String>) valor;
-                        if (nomeMap.containsKey("common")) {
-                            pais.getNome().setCommon(nomeMap.get("common"));
-                        }
-                    }
-                    break;
-                case "capital":
-                    if (valor instanceof List) {
-                        @SuppressWarnings("unchecked")
-                        List<String> capitalList = (List<String>) valor;
-                        pais.setCapital(capitalList);
-                    }
-                    break;
-                case "region":
-                    if (valor instanceof String) {
-                        pais.setRegiao((String) valor);
-                    }
-                    break;
-                case "population":
-                    if (valor instanceof Number) {
-                        pais.setPopulacao(((Number) valor).longValue());
-                    }
-                    break;
-                default:
-                    throw new IllegalArgumentException("Campo inválido: " + chave);
-            }
-        });
-
-        Pais paisAtualizado = paisRepository.save(pais);
-        return ResponseEntity.ok(paisAtualizado);
-    }
-
-    @Operation(summary = "Deletar um país",
-            description = "Remove um país do banco de dados com base no ID fornecido.",
-            responses = {
-                    @ApiResponse(responseCode = "204", description = "País deletado com sucesso"),
-                    @ApiResponse(responseCode = "404", description = "País não encontrado")
-            })
-    @DeleteMapping("/{id}")
+    // Endpoint para deletar um país
+    @Operation(summary = "Deletar um país", description = "Remove um país com base no ID fornecido.")
+    @DeleteMapping("/deletar/{id}")
     public ResponseEntity<Void> deletarPais(@PathVariable Long id) {
-        if (!paisRepository.existsById(id)) {
+        boolean deletado = paisService.deletar(id);
+        if (deletado) {
+            return ResponseEntity.noContent().build();
+        } else {
             return ResponseEntity.notFound().build();
         }
-        paisRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
+    }
+
+    // Endpoint para importar países de uma API externa
+    @Operation(summary = "Importar países", description = "Importa países de uma API externa e armazena no banco de dados.")
+    @PostMapping("/importar")
+    public ResponseEntity<String> importarPaises() {
+        paisService.importarPaises();
+        return ResponseEntity.ok("Países importados com sucesso!");
     }
 }
